@@ -1,0 +1,111 @@
+.register {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #eeeeee;
+  color: black;
+  border: 1px solid #333333;
+  border-radius: 5px;
+  height: 50px;
+  width: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.container {
+  height: 100dvh;
+  width: 100dvw;
+  background-color: #fefefe;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.usrContainer {
+  height: calc(100%);
+  width: 30%;
+  display: flex;
+
+  border-right: 2px solid black;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.user {
+  margin-top: 10px;
+  border-bottom: 1px solid #17153b;
+  width: 90%;
+  height: 25px;
+  text-align: center;
+  padding: 5px;
+}
+
+.user:hover {
+  background-color: #333333;
+  color: white;
+  cursor: pointer;
+}
+
+.chatContainer {
+  height: calc(100%);
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  height: 10%;
+  font-size: 64px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msgArea {
+  height: 80%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  overflow-y: auto;
+}
+
+.msg {
+  margin-top: 10px;
+  background-color: #17153b;
+  color: white;
+  padding: 5px;
+  height: 25px;
+}
+
+.msg:hover {
+  background-color: #333333;
+  color: white;
+}
+
+.inputArea {
+  height: 10%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.inputArea input {
+  width: 75%;
+  height: 40px;
+}
+
+.inputArea button {
+  height: 45px;
+  width: 15%;
+  font-family: inherit;
+  font-size: 24px;
+}
