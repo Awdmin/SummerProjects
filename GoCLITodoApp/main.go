@@ -277,8 +277,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	dbUser := os.Getenv("MONGO_USERNAME")
-	dbPass := os.Getenv("MONGO_PASSWORD")
+	dbURI := os.Getenv("MONGO_URI")
 
 	f, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -289,7 +288,7 @@ func main() {
 	ctx, cancle := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancle()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb+srv://%s:%s@cluster0.uv4lr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", dbUser, dbPass)))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Fatal(err)
 	} 
