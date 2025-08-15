@@ -31,6 +31,7 @@ type model struct {
 
 type mode int
 
+
 const (
 	menuMode mode = iota
 	newTodoMode
