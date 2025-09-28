@@ -1,6 +1,4 @@
 import { useState, useRef } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 
 function App() {
@@ -14,7 +12,7 @@ function App() {
   const [msgs, setMsgs] = useState([]);
   const [title, setTitle] = useState("WebRTC Chat");
 
-  const socketURI = import.meta.env.REACT_APP_BACKEND_URI;
+  const socketURI = import.meta.env.VITE_APP_BACKEND_URI;
   const socket = new WebSocket(socketURI);
 
   socket.onconnectionstatechange = () => {
