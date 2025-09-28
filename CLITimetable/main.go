@@ -190,8 +190,6 @@ func fetchData(offset int, c *colly.Collector) {
 		log.Fatal(err)
 	}
 
-		fmt.Println(formated)
-
 
 	err = c.Visit(fmfURI+formated)
 	if err != nil {
@@ -237,7 +235,7 @@ func fillTable(table *tview.Table) {
 
 
 func main() {
-	err := godotenv.Load()
+	err := godotenv.Load("/home/anze/Code/SummerProjects/CLITimetable/.env")
 	if err != nil {
 		log.Fatal("Could not load .env variables")
 		return
@@ -271,6 +269,8 @@ func main() {
 	fetchData(weekOffset, c)
 
 	app := tview.NewApplication()
+	app.EnableMouse(true)
+
 	table := tview.NewTable().SetBorders(true)
 	table.SetSelectable(true, true)
 	
