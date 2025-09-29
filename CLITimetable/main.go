@@ -235,7 +235,7 @@ func fillTable(table *tview.Table) {
 
 
 func main() {
-	// the path for env must be set when building for local app
+	// the path for env must be set when building for local app (terminal app)
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Could not load .env variables")
