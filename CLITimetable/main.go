@@ -181,7 +181,7 @@ func fetchData(offset int, c *colly.Collector) {
 	fmfURI := os.Getenv("FMF_URI")
 
 	today := time.Now()
-	date := today.AddDate(0, 0, 7*offset)
+	date := today.AddDate(0, 0, 7*offset+2)
 	formated := date.Format("2006-01-02")
 
 
