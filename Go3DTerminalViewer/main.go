@@ -1,10 +1,12 @@
-package main
+ackage main
 
 import(
 	"fmt"
 	"time"
 	"math"
 	//"log"
+
+	"github.com/Awdmin/SummerProjects/Go3DTerminalViewer/mt"
 )
 
 var FACE_CHARS []byte = []byte{'@', '#', '$', '&', '÷'}
@@ -151,6 +153,13 @@ func (s *Scene) Draw(size int, char int) {
 	}
 }
 
+//
+// Curently the program displays a cube, the angles are not working as they should
+// I want to change the logic, so it calculates a projection and thus the inclusion of points in the object as it will make the future additions easier to implement
+// I need to lok at some math to see how can i reverse project a shape in 3D space and then figure on what face it is
+// then i can start working on rotation and animations, for which the base is written
+// Then i want to look into different shapes and find a format that lets me plot more than just one shape and is equation based
+//
 
 func main() {
 	clearScreen()
