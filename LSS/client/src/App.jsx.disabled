@@ -1,0 +1,82 @@
+import { useState, useEffect } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
+import { Box, Card, CardContent, Typography, Button } from "@mui/material";
+
+function App() {
+    const [data, setData] = useState([]);
+    const URL = import.meta.env.VITE_API_URL;
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch(`${URL}/entries`);
+                const json = await response.json();
+
+                const result = [];
+                const today = new Date();
+
+                // Create 7 day buckets
+                for (let i = 0; i < 7; i++) {
+                  const d = new Date();
+                  d.setDate(today.getDate() + i);
+
+                  const key = d.toISOString().split("T")[0];
+
+                  result.push({
+                    date: key,
+                    items: [],
+                  });
+                }
+
+                // Fill buckets
+                json.forEach((item) => {
+                  const itemDate = new Date(item.date)
+                    .toISOString()
+                    .split("T")[0];
+
+                  const bucket = result.find((r) => r.date === itemDate);
+                  if (bucket) {
+                    bucket.items.push(item);
+                  }
+                });
+
+                setData(result);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
+    }, [URL]);
+
+    console.log(data)
+
+    return (
+        <Box
+            sx={{
+                display:"grid",
+                gridTemplateColumns:"repeat(7, 1fr)",
+                gap:4,
+            }}
+        >
+            {data.map((column, i) => (
+                <Box key={i}>
+                    <Typography>{column.date}</Typography>
+                    <Button>Najavi se</Button>
+                    {column.items.map((card, i) => (
+                        <Card variant="outlined" key={i}>
+                            <CardContent>
+                                <Typography>{card.name}</Typography>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </Box>
+            ))}
+        </Box>
+    );
+}
+
+export default App

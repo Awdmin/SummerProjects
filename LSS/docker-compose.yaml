@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./server
+    image: lss-server
+    ports:
+      - "8111:8111"
+    
+  frontend:
+    build: ./client
+    image: lss-client
+    ports:
+      - "8112:80"
+    env_file:
+      - .env
