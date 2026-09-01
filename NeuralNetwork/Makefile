@@ -5,7 +5,7 @@ SRC = $(wildcard src/*.c)
 OBJ = $(SRC:src/%.c=build/%.o)
 
 main: $(OBJ)
-	$(CC) $(OBJ) -o $@
+	$(CC) $(OBJ) -o $@ -lm
 
 build/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@

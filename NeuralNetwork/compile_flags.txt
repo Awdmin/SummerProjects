@@ -2,4 +2,4 @@
 -Iinclude
 -Wall
 -Wextra
--std=c11
+-std=c99
