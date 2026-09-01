@@ -1,3 +1,4 @@
+#include <iso646.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -8,7 +9,7 @@
 - vector operations
 - basic structs for neural network
 - forward pass
- 
+
 ################### TO DO ####################
 - activation functions
 - backwards pass (learning)
@@ -20,57 +21,76 @@ float _rand() {
     return rand() / (float)(RAND_MAX/2) - 1;
 }
 
-Vector* sum(Vector* a, Vector* b) {
+Matrix* sum(Matrix* a, Matrix* b) {
 
-    if(a->dim != b->dim) {
-        return NULL;
-    }
+    if(a->cols != b->cols || a->rows != b->rows) return NULL;
 
-    Vector* r = (Vector*)malloc(sizeof(Vector));
-    r->dim = a->dim;
-    float* v = (float*)malloc(sizeof(int)*r->dim);
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = a->cols;
+    r->rows = a->rows;
+    float** v = (float**)malloc(sizeof(float*)*r->rows);
 
-    for(int i = 0; i < r->dim; i++) {
-        v[i] = a->v[i] + b->v[i];
+    for(int i = 0; i < r->rows; i++) {
+        v[i] = (float*)malloc(sizeof(float)*r->cols);
+        for(int k = 0; k < r->cols; k++) {
+            v[i][k] = a->v[i][k] + b->v[i][k];
+        }
     }
     r->v = v;
     return r;
 }
 
+Matrix* product(Matrix* a, Matrix* b) {
 
-float dot(Vector* a, Vector* b) {
+    if(a->cols != b->rows) return NULL;
 
-    if(a->dim != b->dim) {
-        return 0;
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = b->cols;
+    r->rows = a->rows;
+    float** v = (float**)malloc(sizeof(float*)*r->rows);
+    for(int i = 0; i < r->rows; i++) {
+        v[i] = (float*)malloc(sizeof(float)*r->cols);
+        for(int k = 0; k < r->cols; k++) {
+            v[i][k] = 0;
+            for(int j = 0; j < a->cols; j++) {
+                v[i][k] += a->v[i][j] * b->v[j][k];
+            }
+        }
     }
-
-    float s = 0;
-    for(int i = 0; i < a->dim; i++) {
-        s += a->v[i]*b->v[i];
-    }
-    return s;
-}
-
-Vector* layer_out(Layer* l, Vector* v_in) {
-    if(l->nodes[0].weights->dim != v_in->dim) {
-        return NULL;
-    }
-    Vector* r = (Vector*)malloc(sizeof(Vector));
-    r->dim = l->n_nodes;
-    r->v = (float*)malloc(sizeof(float)*r->dim);
-    for(int i = 0; i < l->n_nodes; i++) {
-        r->v[i] = dot(l->nodes[i].weights, v_in) + l->nodes[i].bias;
-    }
-
+    r->v = v;
     return r;
 }
 
-Vector* forward_pass(Network* nn, Vector* input) {
-    if(nn->n_layers == 0) {
-        return NULL;
-    }
+Matrix* transpose(Matrix* m) {
 
-    Vector* v = layer_out(&nn->layers[0], input);
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = m->rows;
+    r->rows = m->cols;
+    float** v = (float**)malloc(sizeof(float*)*r->rows);
+    for(int i = 0; i < r->rows; i++) {
+        v[i] = (float*)malloc(sizeof(float)*r->cols);
+        for(int k = 0; k < r->cols; k++) {
+            v[i][k] = m->v[k][i];
+        }
+    }
+    r->v = v;
+    return r;
+}
+
+Matrix* layer_out(Layer* l, Matrix* input) {
+    Matrix* p = product(l->weights, input);
+    Matrix* r = sum(p, l->biases);
+    free_matrix(p);
+    return r;
+}
+
+Matrix* forward_pass(Network* nn, Matrix* input) {
+    if(input == NULL) return NULL;
+    if(nn->n_layers == 0) return NULL;
+    if(input->cols != 1) return NULL; //needs to be a vector
+    //if(input->rows != nn->layers[0].biases->rows) return NULL;
+
+    Matrix* v = layer_out(&nn->layers[0], input);
     for(int i = 1; i < nn->n_layers; i++) {
         v = layer_out(&nn->layers[i], v);
     }
@@ -81,40 +101,63 @@ Vector* forward_pass(Network* nn, Vector* input) {
 
 // ----- Init functions -----
 
-Layer* init_layer(int n, int dim) { //dim needs to be the same as the n_nodes on the previous layer
+Layer* init_layer(int in_dim, int n_nodes) {
 
-    Layer* l = (Layer*)malloc(sizeof(Layer));
-    l->nodes = (Node*)malloc(sizeof(Node)*n);
-    l->n_nodes = n;
-
-    for(int i = 0; i < n; i++) {
-        l->nodes[i].bias = _rand();
-        l->nodes[i].weights = (Vector*)malloc(sizeof(Vector));
-        l->nodes[i].weights->dim = dim;
-        l->nodes[i].weights->v = (float*)malloc(sizeof(float)*dim);
-        for(int k = 0; k < dim; k++) {
-            l->nodes[i].weights->v[k] = _rand();
+    Matrix* m = (Matrix*)malloc(sizeof(Matrix));
+    m->rows = n_nodes;
+    m->cols = in_dim;
+    float** v = (float**)malloc(sizeof(float*)*m->rows);
+    for(int i = 0; i < m->rows; i++) {
+        v[i] = (float*)malloc(sizeof(float)*m->cols);
+        for(int k = 0; k < m->cols; k++) {
+            v[i][k] = _rand();
         }
     }
+    m->v = v;
+
+    Matrix* b = (Matrix*)malloc(sizeof(Matrix));
+    b->rows = n_nodes;
+    b->cols = 1;
+    float** w = (float**)malloc(sizeof(float*)*b->rows);
+    for(int i = 0; i < b->rows; i++) {
+        w[i] = (float*)malloc(sizeof(float));
+        w[i][0] = _rand();
+    }
+    b->v = w;
+
+    Layer* l = (Layer*)malloc(sizeof(Layer));
+    l->biases = b;
+    l->weights = m;
 
     return l;
 }
 
+// ----- Free functions -----
 
+void free_matrix(Matrix* m) {
+    for(int i = 0; i < m->rows; i++) {
+        free(m->v[i]);
+    }
+    free(m->v);
+    free(m);
+}
 
 // ----- Print functions -----
 
-void print_vector(Vector* a) {
-    printf("[");
-    for(int i = 0; i < a->dim; i++) {
-        printf(" %f", a->v[i]);
+void print_matrix(Matrix* m) {
+    for(int i = 0; i < m->rows; i++) {
+        printf("[");
+        for(int k = 0; k < m->cols; k++) {
+            printf(" %f", m->v[i][k]);
+        }
+        printf(" ]\n");
     }
-    printf(" ]\n");
+    printf("\n");
 }
 
 void print_layer(Layer* l) {
-    for(int i = 0; i < l->n_nodes; i++) {
-        printf("n%d_ bias: %f, weights: ", i, l->nodes[i].bias);
-        print_vector(l->nodes[i].weights);
-    }
+    printf("biases: \n");
+    print_matrix(l->biases);
+    printf("weights: \n");
+    print_matrix(l->weights);
 }
