@@ -1,18 +1,18 @@
-ackage main
+package main
 
 import(
 	"fmt"
 	"time"
 	"math"
-	//"log"
+	"log"
 
 	"github.com/Awdmin/SummerProjects/Go3DTerminalViewer/mt"
 )
 
 var FACE_CHARS []byte = []byte{'@', '#', '$', '&', '÷'}
-const ANGLE float64 = math.Pi/2.5
+const ANGLE float64 = math.Pi/6
 const CL_RATIO int = 2
-const SCENE_DURATION int = 0
+const SCENE_DURATION int = 1
 const FPS int = 12
 const F_DURATION time.Duration = time.Duration(1000/FPS)
 const PLANE_SIZE = 80
@@ -21,76 +21,21 @@ type Scene struct {
 	Objects	[]Cube
 }
 
-type Square struct {
-	Side	int
-	X		int
-	Y		int
-	Angle	float64
-	Top		bool
-}
 
 type Cube struct {
-	Squares	[]Square
 	Side	int
 	X		int
 	Y		int
-	Angle	float64
 }
 
-
-func (c *Cube) Init() {
-	
-
-	s1 := Square{
-		Side:	int(math.Abs(float64(c.Side) * math.Cos(c.Angle))),
-		X:		c.X,
-		Y:		c.Y, //+ int(math.Abs(float64(c.Side) * math.Cos(math.Pi - 2*math.Pi/3.0 - c.Angle)) * math.Tan(math.Pi - 2*math.Pi/3 - c.Angle)), 
-		Angle:	-c.Angle,
-		Top:	false,
-	}
-	//fmt.Println(s1.Side, s1.Angle)
-
-	s2 := Square{
-		Side: 	int(math.Abs(float64(c.Side) * math.Cos(math.Pi - 2*math.Pi/3.0 - c.Angle))),
-		X:		c.X+s1.Side,
-		Y:		c.Y-int(math.Abs(float64(c.Side) * math.Cos(math.Pi - 2*math.Pi/3.0 - c.Angle))),
-		Angle:	math.Pi - 2*math.Pi/3 - c.Angle,
-		Top:	false,
-	}
-	//fmt.Print(s2.Side, s2.Angle)
-
-	s3 := Square{
-		Side:	int(math.Abs(float64(c.Side) * math.Cos(c.Angle))),
-		X:		c.X,
-		Y:		c.Y-c.Side,
-		Angle:	-c.Angle,
-		Top:	true,
-	}
-
-	s4 := Square{
-		Side: 	int(math.Abs(float64(c.Side) * math.Cos(math.Pi - 2*math.Pi/3.0 - c.Angle))),
-		X:		c.X+s1.Side,
-		Y:		c.Y-c.Side-int(math.Abs(float64(c.Side) * math.Cos(math.Pi - 2*math.Pi/3.0 - c.Angle))),
-		Angle:	math.Pi - 2*math.Pi/3 - c.Angle,
-		Top:	true,
-	}
-
-	c.Squares = []Square{s1, s2, s3, s4}
-
+type Point struct {
+	X		int
+	Y		int
 }
 
-
-func (s *Square) VerticalOffsetForX(x int) int {
-	var x1 int
-		x1 = x - s.X
-		//x1 = s.Side - (x - s.X)
-	if x1 < 0 {
-		return -1
-	}
-	offset := float64(s.Side) * math.Tan(s.Angle) - float64(x1) * math.Tan(s.Angle)
-	//fmt.Print(offset)
-
-	return int(offset)
+type FillLine struct {
+	startX	int
+	endX	int
 }
 
 
@@ -98,89 +43,178 @@ func clearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
 
-/*
-func translateCoordinates(x int, y int) (int, int) {
-	return PLANE_SIZE/2 + x, (PLANE_SIZE/CL_RATIO)/2 + y/CL_RATIO
+func fillShape(pts []Point) map[int]FillLine {
+	fillLines := make(map[int]FillLine)
+	for i, _ := range pts {
+		p1 := pts[i]
+		p2 := pts[(i+1)%len(pts)]
+		fmt.Println(i, (i+1)%len(pts))
+		diffY := float64(p2.Y - p1.Y)
+		diffX := float64(p2.X - p1.X)
+		minY := math.Min(float64(p1.Y), float64(p2.Y))
+		minX := math.Min(float64(p1.X), float64(p2.X))
+
+		if diffY == 0 {
+			idx := int(minY)
+			line := FillLine{
+						startX:		int(minX),
+						endX:		int(minX + math.Abs(diffX)),
+					}
+			fillLines[idx] = line
+		} else {
+
+			k := -(diffX / diffY)
+			if diffY < 0 {
+				k = 1*k
+				diffY *= -1
+			} else {
+				k *= -1
+			}
+			fmt.Print(i, (i+1)%len(pts))
+			fmt.Printf("-> %f, %f, %f", diffY, diffX, k)
+			for j := 0; j < int(diffY); j++ {
+				idx := int(minY) + j
+				v1 := float64(fillLines[idx].startX)
+				v2 := float64(fillLines[idx].endX) // need to fix the 0 def value to get correct starts
+				vt := (float64(j)) * k
+				var minV int
+				if v1 == 0|| v2 == 0 {
+					minV = int(minX + vt) 
+				} else {
+					minV = int(math.Min(v2, math.Min(v1, minX + vt)))
+				}
+
+				maxV := int(math.Max(v2, math.Max(v1, minX + vt)))
+
+				fmt.Print(idx)
+
+				line := FillLine{
+							startX:		minV,
+							endX:		maxV,
+						}
+
+				fmt.Println(line)
+
+				fillLines[idx] = line
+								
+				
+			}
+		}
+	}
+
+	return fillLines
+
 }
-*/
 
-func (c *Cube) DrawPixle(x int, y int) bool {
-	for i, s := range c.Squares {
-		offsetBottom := s.VerticalOffsetForX(x)
-		offsetTop := offsetBottom
-		ch := 4
-		
-		if s.Top {
-			offsetTop = (int(float64(s.Side) * math.Tan(s.Angle)) - offsetBottom)
-			ch = 3
+
+func (c *Cube) DrawPixle(x int, y int, angle float64) bool {
+	rtX := mt.Matrix{
+		Values:		[][]float64{
+						{1, 0, 0},
+						{0, math.Cos(angle), math.Sin(angle)},
+						{0, -math.Sin(angle), math.Cos(angle)},
+					},
 		}
 
-		if i == 1 {
-			ch = 1
+	rtY := mt.Matrix{
+		Values:		[][]float64{
+						{math.Cos(angle), 0, -math.Sin(angle)},
+						{0, 1, 0},
+						{math.Sin(angle), 0, math.Cos(angle)},
+					},
 		}
 
-
-		topBorder, bottomBorder := s.Y/2 + offsetTop, s.Y/2 + c.Side/2 + offsetBottom
-		leftBorder, rightBorder := s.X, s.X + s.Side
-
-		if x > leftBorder && x <= rightBorder && y > topBorder && y <= bottomBorder {
-			fmt.Print(string(FACE_CHARS[ch]))
-			return true
+	posVector := mt.Matrix{
+		Values:		[][]float64{
+						{float64(x)}, 
+						{float64(y)}, 
+						{0},
+					},
 		}
+	
+	m1, err := rtX.Multiply(rtY)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	newPos, err := m1.Multiply(posVector)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//fmt.Printf("%f %f", newPos.Values[0], newPos.Values[1])
+
+	newX := int(newPos.Values[0][0])
+	newY := int(newPos.Values[1][0])
+	//fmt.Print(newX, newY)
+
+	if newX < c.X + c.Side && newX > c.X && newY < c.Y + c.Side/2 && newY > c.Y {
+		return true
 	}
 
 	return false
 }
 
 
-func (s *Scene) Draw(size int, char int) {
+func (s *Scene) Draw(size int, char int, angle float64, fillLines map[int]FillLine) {
 	for i := 0; i < size/CL_RATIO; i++ {
-		for j := 0; j < size; j++ {
+		for j := 0; j < fillLines[i].startX; j++ {
 			if j == 0 {
 				fmt.Printf("%02d", i)
-			}
-			pixle := false
-			for _, e := range s.Objects {
-				if e.DrawPixle(j, i) {
-					pixle = true
-				}
-			}
-			if !pixle {
+			} else {
 				fmt.Print(" ")
 			}
 		}
+		for j := fillLines[i].startX; j < fillLines[i].endX; j++ {
+			fmt.Print(string(FACE_CHARS[char]))
+		}
+		for j := fillLines[i].endX; j < size; j++ {
+			if j == 0 {
+				fmt.Printf("%02d", i)
+			} else {
+				fmt.Print(" ")
+			}		}
+
 		fmt.Print("\n");
 	}
 }
 
+
 //
-// Curently the program displays a cube, the angles are not working as they should
-// I want to change the logic, so it calculates a projection and thus the inclusion of points in the object as it will make the future additions easier to implement
-// I need to lok at some math to see how can i reverse project a shape in 3D space and then figure on what face it is
-// then i can start working on rotation and animations, for which the base is written
-// Then i want to look into different shapes and find a format that lets me plot more than just one shape and is equation based
+// make a hash map that stores the important pixle values
+// rotate a 3d cube (all 7/8 verticies) and write a function that can color inside a convex shape defined by those points (not the bes solution but progress)
 //
+
 
 func main() {
 	clearScreen()
 
 	c1 := Cube{
-		Side:	20,
-		X: 10,
-		Y: 45,
-		Angle:	math.Pi/6,
+		Side:	15,
+		X: 		10,
+		Y: 		15,
 	}
-	c1.Init()
 
 	var scene Scene
 	scene.Objects = []Cube{c1}
 
+	pts := []Point{
+		Point{X: 3, Y: 3},
+		Point{X: 20, Y: 5},
+		Point{X: 20, Y: 15},
+		Point{X: 3, Y: 12},
+	}
+
+	fillLines := fillShape(pts)
+
+
 	for i := 0; i < SCENE_DURATION*FPS; i++ {
-		scene.Draw(PLANE_SIZE, i % 5)
+		scene.Draw(PLANE_SIZE, i % 5, float64(i%6)*(math.Pi/float64(6)), fillLines)
 		time.Sleep(F_DURATION * time.Millisecond)
 		clearScreen()
 	}
 
-	scene.Draw(PLANE_SIZE, 1)
-}
+	scene.Draw(PLANE_SIZE, 1, math.Pi/6, fillLines)
 
+	fillLines = fillShape(pts)
+}

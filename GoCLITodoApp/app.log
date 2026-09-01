@@ -1,1 +1,9 @@
 2025/08/07 18:10:43 4
+2025/09/28 11:40:10 error validating uri: username required if URI contains user info
+2025/09/28 11:40:27 server selection error: context deadline exceeded, current topology: { Type: ReplicaSetNoPrimary, Servers: [{ Addr: cluster0-shard-00-02.uv4lr.mongodb.net:27017, Type: Unknown, Last error: remote error: tls: internal error }, { Addr: cluster0-shard-00-00.uv4lr.mongodb.net:27017, Type: Unknown, Last error: remote error: tls: internal error }, { Addr: cluster0-shard-00-01.uv4lr.mongodb.net:27017, Type: Unknown, Last error: remote error: tls: internal error }, ] }
+2025/09/28 11:41:28 4
+2025/09/28 11:41:58 5
+2025/10/04 13:18:26 error validating uri: username required if URI contains user info
+2025/10/04 13:19:14 5
+2025/10/04 13:19:28 5
+2025/10/05 11:38:38 16

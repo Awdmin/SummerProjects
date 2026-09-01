@@ -36,7 +36,7 @@ func radixPass(base int, nums []uint32, layer int) []uint32 {
 
 
 func main() {
-	n_nums := 1000000
+	n_nums := 100000000
 	base := 65536
 	nums := make([]uint32, n_nums)
 
