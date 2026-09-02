@@ -22,39 +22,85 @@ double _rand() {
     return rand() / (double)(RAND_MAX/2) - 1;
 }
 
-void a_func(Matrix* m, char id) {
-    if(m->cols != 1) return;
+Matrix* a_func(Matrix* m, char id) {
+    if(m->cols != 1) return NULL;
     double s = 0;
-
-    switch (id) {
-        case 0: // sigmoid
-            for(int i = 0; i < m->rows; i++) {
-                m->v[i][0] = (1/(1 + pow(EULER_NUMBER, -m->v[i][0])));
-            }
-           break;
-        case 1: // ReLU
-            for(int i = 0; i < m->rows; i++) {
-                m->v[i][0] = m->v[i][0] > 0 ? m->v[i][0] : 0;
-            }
-            break;
-        case 2: // tanh
-            for(int i = 0; i < m->rows; i++) {
-                m->v[i][0] = tanh(m->v[i][0]);
-            }
-            break;
-        case 3: // softmax
-            for(int i = 0; i < m->rows; i++) {
-                m->v[i][0] = pow(EULER_NUMBER, m->v[i][0]);
-                s += m->v[i][0];
-            }
-            for(int i = 0; i < m->rows; i++) {
-                m->v[i][0] /= s;
-            }
-            break;
-        default:
-            break;
+    if(id == 3) {
+        for(int j = 0; j < m->rows; j++) {
+            s += pow(EULER_NUMBER, m->v[j][0]);
+        }
     }
+
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = 1;
+    r->rows = m->rows;
+    r->v = (double**)malloc(sizeof(double*)*r->rows);
+
+    for(int i = 0; i < r->rows; i++) {
+        r->v[i] = (double*)malloc(sizeof(double));
+        switch (id) {
+            case 0: // sigmoid
+                r->v[i][0] = (1/(1 + pow(EULER_NUMBER, -m->v[i][0])));
+            break;
+            case 1: // ReLU
+                r->v[i][0] = m->v[i][0] > 0 ? m->v[i][0] : 0;
+                break;
+            case 2: // tanh
+                r->v[i][0] = tanh(m->v[i][0]);
+                break;
+            case 3: // softmax
+
+                r->v[i][0] = pow(EULER_NUMBER, m->v[i][0]);
+                r->v[i][0] /= s;
+                break;
+            default:
+                r->v[i][0] = m->v[i][0];
+                break;
+        }
+    }
+    return r;
 }
+
+
+Matrix* a_func_d(Matrix* m, char id) {
+    if(m->cols != 1) return NULL;
+    double s = 0;
+    if(id == 3) {
+        for(int j = 0; j < m->rows; j++) {
+            s += pow(EULER_NUMBER, m->v[j][0]);
+        }
+    }
+
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = 1;
+    r->rows = m->rows;
+    r->v = (double**)malloc(sizeof(double*)*r->rows);
+
+    for(int i = 0; i < r->rows; i++) {
+        r->v[i] = (double*)malloc(sizeof(double));
+        switch (id) {
+            case 0: // sigmoid d/dx
+                r->v[i][0] = (1/(1 + pow(EULER_NUMBER, -m->v[i][0])));
+                r->v[i][0] = r->v[i][0]*(1-r->v[i][0]);
+            break;
+            case 1: // ReLU
+                r->v[i][0] = m->v[i][0] > 0 ? m->v[i][0] : 0;
+                break;
+            case 2: // tanh
+                r->v[i][0] = tanh(m->v[i][0]);
+                break;
+            case 3: // softmax
+                r->v[i][0] = pow(EULER_NUMBER, m->v[i][0]);
+                r->v[i][0] /= s;
+                break;
+            default:
+                r->v[i][0] = m->v[i][0];
+                break;
+        }
+    }
+    return r;
+}
+
 
 Matrix* sum(Matrix* a, Matrix* b) {
 
@@ -120,30 +166,33 @@ Matrix* transpose(Matrix* m) {
     return r;
 }
 
-Matrix* layer_out(Layer* l, Matrix* input) {
+Matrix* layer_out(Layer* l, Matrix* input, Matrix** out) {
     Matrix* p = product(l->weights, input);
     Matrix* r = sum(p, l->biases);
     free_matrix(p);
-    a_func(r, l->a_func);
-    return r;
+    *out = r;
+    Matrix* f = a_func(r, l->a_func);
+    return f;
 }
 
-Matrix** forward_pass(Network* nn, Matrix* input) {
+Matrix* forward_pass(Network* nn, Matrix* input, Matrix** r) {
     if(input == NULL) return NULL;
     if(nn->n_layers == 0) return NULL;
     if(input->cols != 1) return NULL; //needs to be a vector
 
-    Matrix** r = (Matrix**)malloc(sizeof(Matrix)*nn->n_layers);
-    r[0] = layer_out(&nn->layers[0], input);
+    Matrix* v = layer_out(&nn->layers[0], input, &r[0]);
     for(int i = 1; i < nn->n_layers; i++) {
-        r[i] = layer_out(&nn->layers[i], r[i-1]);
+        Matrix* tmp = layer_out(&nn->layers[i], v, &r[i]);
+        free_matrix(v);
+        v = tmp;
     }
-    return r;
+    return v;
 }
 
-void backward_pass(Network* nn, Matrix** outputs) {
+void backward_pass(Network* nn, Matrix** outputs, Matrix* target) {
 
-    Matrix* d_
+    scalar(target, -1);
+    Matrix* d_error = sum(target, layer_out(&nn->layers[nn->n_layers-1], outputs[nn->n_layers-2], NULL));
 
 }
 
@@ -220,5 +269,5 @@ void print_network(Network* nn) {
         printf("L%d \t<> input dim: %d \t<> num nodes: %d\n", i, nn->layers[i].weights->cols, nn->layers[i].weights->rows);
         t_params += nn->layers[i].weights->cols * nn->layers[i].weights->rows + nn->layers[i].biases->rows;
     }
-    printf("-------- Number of trainable params: %d -------\n", t_params);
+    printf("------- Number of trainable params: %d --------\n", t_params);
 }

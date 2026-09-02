@@ -19,20 +19,21 @@ int main() {
 
 
     Network* nn = (Network*)malloc(sizeof(Network));
-    nn->n_layers = 4;
+    nn->n_layers = 3;
     Layer* layers = (Layer*)malloc(sizeof(Layer)*nn->n_layers);
-    layers[0] = *init_layer(3, 3, 0);
-    layers[1] = *init_layer(3, 32, 0);
-    layers[2] = *init_layer(32, 32, 0);
-    layers[3] = *init_layer(32, 4, 3);
+    layers[0] = *init_layer(3, 32, 0);
+    layers[1] = *init_layer(32, 32, 0);
+    layers[2] = *init_layer(32, 4, 3);
     nn->layers = layers;
 
     print_network(nn);
 
 
-    Matrix** out = forward_pass(nn, v);
+    Matrix** r = (Matrix**)malloc(sizeof(Matrix*)*nn->n_layers);
 
-    print_matrix(out[nn->n_layers-1]);
+    Matrix* out = forward_pass(nn, v, r);
+
+    print_matrix(out);
 
     return 0;
 }

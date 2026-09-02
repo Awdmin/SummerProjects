@@ -15,6 +15,12 @@ typedef struct _Layer {
     Matrix* weights;
 } Layer;
 
+/*
+    Network is composed of n layers, each of those is represented by a weight matrix, biases vector and an activation fucntion
+
+
+*/
+
 typedef struct {
     int n_layers;
     Layer* layers;
@@ -23,7 +29,7 @@ typedef struct {
 Matrix* sum(Matrix* a, Matrix* b);
 Matrix* product(Matrix* a, Matrix* b);
 Matrix* transpose(Matrix* m);
-Matrix** forward_pass(Network* nn, Matrix* input);
+Matrix* forward_pass(Network* nn, Matrix* input, Matrix** r);
 
 Layer* init_layer(int in_dim, int n_nodes, char a_func);
 
