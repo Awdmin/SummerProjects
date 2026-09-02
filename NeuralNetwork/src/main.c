@@ -6,35 +6,32 @@
 
 int main() {
 
-    Layer* l1 = init_layer(3, 3);
-    Layer* l2 = init_layer(3, 4);
-    Layer* l3 = init_layer(4, 2);
-
     Matrix* v = (Matrix*)malloc(sizeof(Matrix));
     v->cols = 1;
     v->rows = 3;
-    v->v = (float**)malloc(sizeof(float*)*v->cols);
-    v->v[0] = (float*)malloc(sizeof(float));
+    v->v = (double**)malloc(sizeof(double*)*v->cols);
+    v->v[0] = (double*)malloc(sizeof(double));
     v->v[0][0] = 1;
-    v->v[1] = (float*)malloc(sizeof(float));
+    v->v[1] = (double*)malloc(sizeof(double));
     v->v[1][0] = 2;
-    v->v[2] = (float*)malloc(sizeof(float));
+    v->v[2] = (double*)malloc(sizeof(double));
     v->v[2][0] = 3;
 
 
     Network* nn = (Network*)malloc(sizeof(Network));
     nn->n_layers = 3;
     Layer* layers = (Layer*)malloc(sizeof(Layer)*nn->n_layers);
-    layers[0].biases = l1->biases;
-    layers[0].weights = l1->weights;
-    layers[1].biases = l2->biases;
-    layers[1].weights = l2->weights;
-    layers[2].biases = l3->biases;
-    layers[2].weights = l3->weights;
+    layers[0] = *init_layer(3, 32, 0);
+    layers[1] = *init_layer(32, 32, 0);
+    layers[2] = *init_layer(32, 4, 3);
     nn->layers = layers;
 
+    print_network(nn);
 
-    Matrix* out = forward_pass(nn, v);
+
+    Matrix** r = (Matrix**)malloc(sizeof(Matrix*)*nn->n_layers);
+
+    Matrix* out = forward_pass(nn, v, r);
 
     print_matrix(out);
 
