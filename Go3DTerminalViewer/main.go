@@ -79,7 +79,7 @@ func fillShape(pts []Point) map[int]FillLine {
 				vt := (float64(j)) * k
 				var minV int
 				if v1 == 0|| v2 == 0 {
-					minV = int(minX + vt) 
+					minV = int(minX + vt)
 				} else {
 					minV = int(math.Min(v2, math.Min(v1, minX + vt)))
 				}
@@ -96,8 +96,8 @@ func fillShape(pts []Point) map[int]FillLine {
 				fmt.Println(line)
 
 				fillLines[idx] = line
-								
-				
+
+
 			}
 		}
 	}
@@ -126,12 +126,12 @@ func (c *Cube) DrawPixle(x int, y int, angle float64) bool {
 
 	posVector := mt.Matrix{
 		Values:		[][]float64{
-						{float64(x)}, 
-						{float64(y)}, 
+						{float64(x)},
+						{float64(y)},
 						{0},
 					},
 		}
-	
+
 	m1, err := rtX.Multiply(rtY)
 	if err != nil {
 		log.Fatal(err)
@@ -205,6 +205,10 @@ func main() {
 		Point{X: 3, Y: 12},
 	}
 
+	// Fill shape is hot garbage, this shit aint never gonna work, whoever wrote that is an idiot (me)
+	// it needs to be completly redone, the idea why we need it is sound, this way only the points
+	// of the cube need to be roatted, and then we just fill it in, but, god damn is it horibly written
+	// the draw pixle function actually seems somwhat ok, but its never used
 	fillLines := fillShape(pts)
 
 
