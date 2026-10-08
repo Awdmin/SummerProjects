@@ -29,7 +29,8 @@ typedef struct {
 Matrix* sum(Matrix* a, Matrix* b);
 Matrix* product(Matrix* a, Matrix* b);
 Matrix* transpose(Matrix* m);
-Matrix* forward_pass(Network* nn, Matrix* input, Matrix** r);
+Matrix* forward_pass(Network* nn, Matrix* input, Matrix** z, Matrix** a);
+void backward_pass(Network* nn, Matrix** a, Matrix** z, Matrix* target, double lr);
 
 Layer* init_layer(int in_dim, int n_nodes, char a_func);
 
@@ -38,5 +39,7 @@ void free_matrix(Matrix* m);
 void print_matrix(Matrix* a);
 void print_layer(Layer* l);
 void print_network(Network* nn);
+
+double _rand();
 
 #endif

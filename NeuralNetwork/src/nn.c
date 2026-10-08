@@ -142,12 +142,47 @@ Matrix* product(Matrix* a, Matrix* b) {
     return r;
 }
 
+Matrix* product_per_el(Matrix* a, Matrix* b) {
+
+    if(a->cols != b->cols || a->rows != b->rows) return NULL;
+
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->rows = a->rows;
+    r->cols = b->cols;
+    double** v = (double**)malloc(sizeof(double*)*r->rows);
+    for(int i = 0; i < r->rows; i++) {
+        v[i] = (double*)malloc(sizeof(double)*r->cols);
+        for(int k = 0; k < r->cols; k++) {
+            v[i][k] = a->v[i][k] * b->v[i][k];
+        }
+    }
+
+    r->v = v;
+    return r;
+}
+
 void scalar(Matrix* m, double a) {
     for(int i = 0; i < m->rows; i++) {
         for(int k = 0; k < m->cols; k++) {
             m->v[i][k] *= a;
         }
     }
+}
+
+Matrix* scalar_r(Matrix* m, double a) {
+    Matrix* r = (Matrix*)malloc(sizeof(Matrix));
+    r->cols = m->cols;
+    r->rows = m->rows;
+    double** v = (double**)malloc(sizeof(double*)*r->rows);
+    for(int i = 0; i < m->rows; i++) {
+        v[i] = (double*)malloc(sizeof(double)*r->cols);
+        for(int k = 0; k < m->cols; k++) {
+            v[i][k] *= a;
+        }
+    }
+    r->v = v;
+
+    return r;
 }
 
 Matrix* transpose(Matrix* m) {
@@ -166,33 +201,66 @@ Matrix* transpose(Matrix* m) {
     return r;
 }
 
-Matrix* layer_out(Layer* l, Matrix* input, Matrix** out) {
+Matrix* layer_out(Layer* l, Matrix* input, Matrix** z_i) {
     Matrix* p = product(l->weights, input);
     Matrix* r = sum(p, l->biases);
     free_matrix(p);
-    *out = r;
+    *z_i = r;
     Matrix* f = a_func(r, l->a_func);
     return f;
 }
 
-Matrix* forward_pass(Network* nn, Matrix* input, Matrix** r) {
+Matrix* forward_pass(Network* nn, Matrix* input, Matrix** z, Matrix** a) {
     if(input == NULL) return NULL;
     if(nn->n_layers == 0) return NULL;
     if(input->cols != 1) return NULL; //needs to be a vector
 
-    Matrix* v = layer_out(&nn->layers[0], input, &r[0]);
+    Matrix* v = layer_out(&nn->layers[0], input, &z[0]);
+    a[0] = v;
     for(int i = 1; i < nn->n_layers; i++) {
-        Matrix* tmp = layer_out(&nn->layers[i], v, &r[i]);
-        free_matrix(v);
-        v = tmp;
+        v = layer_out(&nn->layers[i], v, &z[i]);
+        a[i] = v;
     }
+
     return v;
 }
 
-void backward_pass(Network* nn, Matrix** outputs, Matrix* target) {
+void backward_pass(Network* nn, Matrix** a, Matrix** z, Matrix* target, double lr) {
 
+    //calculate first part of the delat eq for last layer
     scalar(target, -1);
-    Matrix* d_error = sum(target, layer_out(&nn->layers[nn->n_layers-1], outputs[nn->n_layers-2], NULL));
+    Matrix* s = sum(a[nn->n_layers-1], target);
+    for(int i = nn->n_layers-1; i >= 0; i--) {
+        //calculate second part of the delta eq
+        Matrix* d = product_per_el(s, z[i]); //missing derivitives for z
+        free(s);
+
+        //calculate weights and biases change
+        Matrix* a_t = transpose(a[i-1]);
+
+        Matrix* dW = product(d, a_t);
+        scalar(dW, -lr);
+        free(a_t);
+        Matrix* dB = scalar_r(d, -lr);
+        
+        print_matrix(dW);
+        print_matrix(dB);
+
+        // update weights
+        Matrix* W_n = sum(nn->layers[i].weights, dW);
+        Matrix* B_n = sum(nn->layers[i].biases, dB);
+        free(nn->layers[i].weights);
+        free(nn->layers[i].biases);
+        nn->layers[i].weights = W_n;
+        nn->layers[i].biases = B_n;
+
+        //calcutate next s (first part of the delta eq);
+        Matrix* W_i_t = transpose(nn->layers[i].weights);
+        Matrix* tmp = product(W_i_t, d);
+        free(s);
+        free(d);
+        s = tmp;
+    }
 
 }
 
